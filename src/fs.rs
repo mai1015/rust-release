@@ -1,5 +1,4 @@
 use std::{fs, io};
-use std::fmt::format;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::SystemTime;

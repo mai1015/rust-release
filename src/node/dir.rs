@@ -75,7 +75,15 @@ impl DirectoryNode {
                     i += 1;
                 }
                 Ordering::Greater => {
-                    update_list.push(FileDiff::Add(FileDetail::new(path.clone(), b.name().clone(), b.is_file())));
+                    match b {
+                        Node::Directory(dir) => {
+                            update_list.push(FileDiff::Add(FileDetail::new(path.clone(), dir.name.clone(), false)));
+                            update_list.extend(dir.as_add());
+                        },
+                        Node::File(_) => {
+                            update_list.push(FileDiff::Add(FileDetail::new(path.clone(), b.name().clone(), b.is_file())));
+                        },
+                    }
                     j += 1;
                 }
                 Ordering::Equal => {
