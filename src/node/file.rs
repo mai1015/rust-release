@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 use std::sync::Arc;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use crate::node::diff::{FileDetail, FileDiff};
 
 
@@ -10,8 +10,33 @@ pub struct FileNode {
     pub path: Option<Arc<str>>,
     pub name: String,
     pub last_modified: u64,
-    pub hash: Option<String>,
+    #[serde(serialize_with = "serialize_hash", deserialize_with = "deserialize_hash")]
+    pub hash: [char; 64],
 }
+
+fn serialize_hash<S>(hash: &[char; 64], serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+{
+    let hash_string: String = hash.iter().collect();
+    serializer.serialize_str(&hash_string)
+}
+
+fn deserialize_hash<'de, D>(deserializer: D) -> Result<[char; 64], D::Error>
+    where
+        D: Deserializer<'de>,
+{
+    let s: String = Deserialize::deserialize(deserializer)?;
+    let mut chars = s.chars();
+    let mut hash = [' '; 64]; // initialize with spaces
+    for (i, c) in hash.iter_mut().enumerate() {
+        *c = chars.next().unwrap_or(' '); // fill with space if not enough chars
+    }
+    Ok(hash)
+}
+
+unsafe impl Sync for FileNode {}
+unsafe impl Send for FileNode {}
 
 impl FileNode {
     pub fn new(path: Arc<str>, name: String, last_modified: u64) -> Self {
@@ -19,8 +44,12 @@ impl FileNode {
             path: Some(path),
             name,
             last_modified,
-            hash: None,
+            hash: [' '; 64],
         }
+    }
+
+    pub fn has_hash(&self) -> bool {
+        self.hash != [' '; 64]
     }
 
     pub fn get_path(&self) -> String {
@@ -36,11 +65,15 @@ impl FileNode {
     }
 
     pub fn set_hash(&mut self, hash: String) {
-        self.hash = Some(hash);
+        if hash.len() != 64 {
+            panic!("Hash length is not 64");
+        }
+        let char_vec: Vec<char> = hash.chars().collect();
+        self.hash.copy_from_slice(&char_vec[..64])
     }
 
     pub fn needs_update(&self, other: &Self) -> bool {
-        if self.hash.is_some() && other.hash.is_some() {
+        if self.has_hash() && other.has_hash() {
             self.hash != other.hash
         } else {
             self.last_modified < other.last_modified

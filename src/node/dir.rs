@@ -12,6 +12,9 @@ pub struct DirectoryNode {
     pub children: Vec<Node>,
 }
 
+#[cfg(feature = "async")]
+unsafe impl Send for DirectoryNode {}
+
 impl DirectoryNode {
     pub fn new(name: String, path: Option<Arc<str>>) -> DirectoryNode {
         DirectoryNode {
@@ -19,6 +22,11 @@ impl DirectoryNode {
             name,
             children: Vec::new(),
         }
+    }
+    
+    pub fn with_capacity(&mut self, capacity: usize) -> &mut Self {
+        self.children.reserve(capacity);
+        return self;
     }
 
     pub fn has_child(&self, child: &Node) -> bool {
