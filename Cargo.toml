@@ -24,7 +24,7 @@ serde = { version =  "1.0.196", features = ["derive"]  }
 flate2 = "1.0.28"
 
 # thread
-tokio = { version = "1.37.0", features = ["io-util", "fs", "macros", "time"], optional = true }
+tokio = { version = "1.37.0", features = ["io-util", "fs", "time", "sync"], optional = true }
 async-recursion = { version = "1.1.1", optional = true }
 
 [dev-dependencies]
