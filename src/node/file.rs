@@ -124,6 +124,7 @@ impl Ord for FileNode {
 
 #[cfg(test)]
 mod tests {
+    use std::path;
     use std::sync::Arc;
     use crate::node::file::FileNode;
 
@@ -131,6 +132,6 @@ mod tests {
     fn test_file_node() {
         let path: Arc<str> = Arc::from(String::from("test").as_ref());
         let file = FileNode::new(path, "test".to_string(), 0);
-        assert_eq!(file.get_path(), "Some(\"test\")/test");
+        assert_eq!(file.get_path(), format!("test{}test", path::MAIN_SEPARATOR_STR));
     }
 }
